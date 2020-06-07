@@ -24,7 +24,7 @@ Intuitivně bude země obsahovat pouze název dané země a její zkratku. Entit
 U typu nám postačí evidovat jeho název.
 
 ## Prodej
-Prodej je realizován pomocí samostatné entity. V té se eviduje zákazník, který zboží kupuje, zaměstnanec ( pověřená osoba ), datum provedení prodeje a volitelnou poznámku. Datum a čas provedení prodeje se automaticky nastaví na aktuální datum a čas, pomocí triggeru. Jelikož ale bude skript znovu spuštěn, rozhodl jsem se v triggeru udělat podmínku. Pokud nevložíme vlastní datum při vkládání do insertu, trigger to automaticky nastaví na aktuální datum a čas. Jinak tam zůstane naše datum. Rozhodl jsem se tak, abych nad tím mohl efektivně dělat dotazy.
+Prodej je realizován pomocí samostatné tabulky. V té se eviduje zákazník, který zboží kupuje, zaměstnanec ( pověřená osoba ), datum provedení prodeje a volitelnou poznámku. Datum a čas provedení prodeje se automaticky nastaví na aktuální datum a čas, pomocí triggeru. Jelikož ale bude skript znovu spuštěn, rozhodl jsem se v triggeru udělat podmínku. Pokud nevložíme vlastní datum při vkládání do insertu, trigger to automaticky nastaví na aktuální datum a čas. Jinak tam zůstane naše datum. Rozhodl jsem se tak, abych nad tím mohl efektivně dělat dotazy.
 
 ## Zákazník
 U zákazníka evidujeme adresu jako cizí klíč. Dále evidujeme klasické atributy - jméno, příjmení, telefon a email.
@@ -36,7 +36,7 @@ U zaměstnance postačí evidovat jméno, příjmení a taktéž osobní číslo
 Položka je tabulka, která je supertypem ISA hierarchie. Jejími podtypy je zbraň a munice. Obě tyto tabulky jsou identifikačně závislé na Položce. Položka obsahuje 2 atributy : id_polozky a cenu za jednotku ( v Kč ).
 
 ## Prodej_položky
-Prodej položky je realizován jako slabá entita. Jedná se o vazební tabulku mezi entitou "Prodej" a entitou "Položka". Entita obsahuje 2 cizí klíče, jejichž kombinace tvoří primární klíč. Dále entitu množství. Pokud bychom chtěli koupit 2 stejné zbraně, stačí pozměnit údaj o množství, stejně jako kdybychom chtěli koupit víc munice, stačí pozměnit údaj o množství.
+Prodej položky je realizován jako slabá entita. Jedná se o vazební tabulku mezi entitou "Prodej" a entitou "Položka". Entita obsahuje 2 cizí klíče, jejichž kombinace tvoří primární klíč. Dále atribut množství. Pokud bychom chtěli koupit 2 stejné zbraně, stačí pozměnit údaj o množství, stejně jako kdybychom chtěli koupit víc munice, stačí pozměnit údaj o množství.
 
 ## Deklarativní integrita dat
 ### Doménová integrita ( přes check constraint )
@@ -52,7 +52,7 @@ Rok založení výrobce je větší než 1800 | Název výrobce je delší než 
 Množství kupovaných kusů je maximálně 1 000 ( určeno hlavně pro munici, neočekává se koupě tolika zbraní )
 
 ### Adresa
-PSČ je maximálně 10 znaků ( Wikipedie ) | Název města je delší než 2 znaky
+PSČ je maximálně 10 znaků | Název města je delší než 2 znaky
 
 ### Položka
 Cena je nenulová a kladná
@@ -61,27 +61,32 @@ Cena je nenulová a kladná
 Název munice je delší než 1 znak
 
 Doménová integrita je pouze na ukázku, je lepší si doménovou integritu zajistit v samotné databázové aplikaci, kde se dají chyby lépe ošetřit.
-Referenční integrita ( on delete )
+
+## Referenční integrita ( on delete )
 Referenční integritu ( ochranu cizích klíčů na straně N při smazání údaje na straně 1 ) řeším u všech entit s vazbou 1:N v databázi.
 
 ## Výrobce-zbraň
 V případě, kdy by byl smazán nějaký výrobce, se všechny zbraně od daného smazaného výrobce taky smažou. V mnoha případech může tato referenční integrita pomoci ( nepohodnutí se s výrobcem, zákaz prodeje od toho výrobce atp. ). Nicméně se doporučuje, aby právo na smazání záznamů neměl obyčejný zaměstnanec. ON DELETE CASCADE
 
 U ostatních entit mi nepřišlo vhodné jakoukoliv referenční integritu používat. Dalo by se říct, že je to zde taktéž pouze na ukázku.
-Entitní integrita ( univerzálnost )
+
+## Entitní integrita ( univerzálnost )
 Entitní integrita je ve všech tabulkách zajištena existencí umělého primární klíče, na kterém je použita sekvence a trigger ( auto_increment ). Pouze entity Zbraň a Munice neobsahují vlastní primární klíče, protože jsou identifikačně závislé na svém nadtypu Položka. Jedná se o ISA hierarchii. Nicméně jsou tabulky taktéž univerzální.
 
 ## Procedurální integrita dat
-Trigger hlídající rok založení u výrobce
+
+### Trigger hlídající rok založení u výrobce
 Trigger before insert / update. Pokud je nějaký vkládaný rok z budoucnosti, automaticky ho nastaví na aktuální rok a vypíše do konzole.
 
-Trigger hlídající rok návrhu u zbraně
+### Trigger hlídající rok návrhu u zbraně
 Trigger before insert / update. Pokud je nějaký vkládaný rok z budoucnosti, automaticky ho nastaví na aktuální rok a vypíše do konzole.
 
-Trigger hlídající datum provedení prodeje
+### Trigger hlídající datum provedení prodeje
 Trigger before insert. Pokaždé před insertem ( pokud v insertu datum není explicitně dáno ) nastaví hodnotu new.datProd na aktuální čas. Update neřeším, protože by přepisoval i už zadané obchody. Doporučuji ale dát práva na update na této tabulce adminovi, nikoliv ostatním uživatelům databáze.
 
-Trigger nastavující název podtypu do atributu polozka_TYPE v supertypu ( ISA hierarchie )
-Jelikož ne všechny data do insert scriptu můžu generovat, rozhodl jsem se udělat si trigger, který mi sám nastaví do "discrimination value" v super typu typ podle ceny. Respektive zadám položku za 200 Kč, tak vím, že to nebude zbraň, ale munice. Tudíž mi stačí zadat cenu. ID se pomocí triggeru a sequence samo zvýší o 1 a polozka_TYPE se mi nastaví na 'munice'. Trigger vygenerovaný pro hlídání ISA hierarchie pak vezme obsah atributu polozka_TYPE, na něj zavolá atribut id_polozky a porovná to s přidávaným. Takhle si oracle hlídá univerzálnost každého záznamu u ISA hierarchie.
+### Trigger nastavující název podtypu do atributu polozka_TYPE v supertypu ( ISA hierarchie )
+Jelikož ne všechny data do insert scriptu můžu generovat, rozhodl jsem se udělat si trigger, který mi sám nastaví do "discrimination value" v supertypu typ podle ceny. Respektive zadám položku za 200 Kč, tak vím, že to nebude zbraň, ale munice. Tudíž mi stačí zadat cenu. ID se pomocí triggeru a sequence samo zvýší o 1 a polozka_TYPE se mi nastaví na 'munice'. Trigger vygenerovaný pro hlídání ISA hierarchie pak vezme obsah atributu polozka_TYPE, na něj zavolá atribut id_polozky a porovná to s přidávaným. Takhle si oracle hlídá univerzálnost každého záznamu u ISA hierarchie.
+
+Autor : Jakub Böhm
 
 
