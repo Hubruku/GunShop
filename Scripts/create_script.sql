@@ -5,7 +5,7 @@
 --   edited:	By Jakub Bohm ( also an author )
 --	 purpose:	DDL script for database school project
 
---BECAUSE MY CREATE SCRIPT CREATES TRIGGERS, TABLES AND ALL THE STUFF, I AM USING A SCRIPT I FOUND ON STACKOVERFLOW TO DELETE THEM ( LINK INCLUDED IN SOURCES )
+--BECAUSE MY CREATE SCRIPT CREATES TRIGGERS, TABLES AND ALL THE STUFF, I AM USING A SCRIPT I FOUND ON STACKOVERFLOW TO DELETE THEM ( https://stackoverflow.com/questions/1690404/how-to-drop-all-user-tables )
 BEGIN
    FOR cur_rec IN (SELECT object_name, object_type
                      FROM user_objects
