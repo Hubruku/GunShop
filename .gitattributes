@@ -1,3 +1,3 @@
 *.css linguist-detectable=false
 *.js linguist-detectable=true
-*.tsql linguist-detectable=false
+*.sql linguist-detectable=false
